@@ -135,9 +135,6 @@ func checkArgs(_ *types.Event) error {
 	if len(plugin.AuthToken) == 0 {
 		return fmt.Errorf("authentication token is empty")
 	}
-	if len(plugin.Team) == 0 {
-		return fmt.Errorf("team is empty")
-	}
 	return nil
 }
 
@@ -278,9 +275,13 @@ func createIncident(alertCli *ogcli.OpsGenieAlertV2Client, event *types.Event) e
 		}
 	}
 
-	teams := []alerts.TeamRecipient{
-		&alerts.Team{Name: plugin.Team},
+	var teams []alerts.TeamRecipient
+	if plugin.Team != "" {
+		teams = []alerts.TeamRecipient{
+			&alerts.Team{Name: plugin.Team},
+		}
 	}
+
 	title, alias, tags := parseEventKeyTags(event)
 
 	request := alerts.CreateAlertRequest{
