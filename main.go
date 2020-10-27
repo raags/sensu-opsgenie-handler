@@ -138,6 +138,27 @@ func checkArgs(_ *types.Event) error {
 	return nil
 }
 
+// formatTags func returns []string with tags data
+// Combines Entity and Check tags and formats in key:value string format
+func formatTags(event *types.Event) (tags []string) {
+	var labels map[string]string
+	if event.Entity.ObjectMeta.Labels != nil {
+		labels = event.Entity.ObjectMeta.Labels
+	} else {
+		labels = make(map[string]string)
+	}
+	// merge labels with Check Labels overriding Entity if they match
+	for k, v := range event.Check.ObjectMeta.Labels {
+		labels[k] = v
+	}
+
+	for k, v := range labels {
+		tags = append(tags, k+":"+v)
+	}
+
+	return tags
+}
+
 // parseEventKeyTags func returns string, string, and []string with event data
 // fist string contains custom templte string to use in message
 // second string contains Entity.Name/Check.Name to use in alias
@@ -148,7 +169,8 @@ func parseEventKeyTags(event *types.Event) (title string, alias string, tags []s
 	if err != nil {
 		return "", "", []string{}
 	}
-	tags = append(tags, event.Entity.Name, event.Check.Name, event.Entity.Namespace, event.Entity.EntityClass)
+	// tags = append(tags, event.Entity.Name, event.Check.Name, event.Entity.Namespace, event.Entity.EntityClass)
+	tags = formatTags(event)
 	return trim(title, plugin.MessageLimit), alias, tags
 }
 

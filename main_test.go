@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	alerts "github.com/opsgenie/opsgenie-go-sdk/alertsv2"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,8 +20,22 @@ func TestGetNote(t *testing.T) {
 	assert.Contains(t, note, string(eventJSON))
 }
 
+func TestFormatTags(t *testing.T) {
+	event := types.FixtureEvent("foo", "bar")
+	om := v2.NewObjectMeta("foo", "default")
+	om.Labels = map[string]string{"foo": "bar"}
+	event.Check.ObjectMeta = om
+	_, err := json.Marshal(event)
+	assert.NoError(t, err)
+	tags := formatTags(event)
+	assert.Contains(t, tags, "foo:bar")
+}
+
 func TestParseEventKeyTags(t *testing.T) {
 	event := types.FixtureEvent("foo", "bar")
+	om := v2.NewObjectMeta("foo", "default")
+	om.Labels = map[string]string{"foo": "bar"}
+	event.Check.ObjectMeta = om
 	_, err := json.Marshal(event)
 	assert.NoError(t, err)
 	plugin.MessageTemplate = "{{.Entity.Name}}/{{.Check.Name}}"
@@ -28,7 +43,7 @@ func TestParseEventKeyTags(t *testing.T) {
 	title, alias, tags := parseEventKeyTags(event)
 	assert.Contains(t, title, "foo")
 	assert.Contains(t, alias, "foo")
-	assert.Contains(t, tags, "foo")
+	assert.Contains(t, tags, "foo:bar")
 }
 
 func TestParseDescription(t *testing.T) {
