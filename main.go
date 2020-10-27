@@ -229,7 +229,12 @@ func eventPriority(event *types.Event) alerts.Priority {
 		}
 	}
 
-	return alerts.P3
+	// set priority based on return code
+	if event.Check.Status >= 2 {
+		return alerts.P1
+	} else {
+		return alerts.P3
+	}
 }
 
 // stringInSlice checks if a slice contains a specific string
