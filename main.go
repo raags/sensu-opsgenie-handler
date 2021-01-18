@@ -188,7 +188,6 @@ func parseDescription(event *types.Event) (description string) {
 // parseDetails func returns a map of string string with check information for the details field
 func parseDetails(event *types.Event) map[string]string {
 	details := make(map[string]string)
-	details["output"] = event.Check.Output
 	details["command"] = event.Check.Command
 	details["proxy_entity_name"] = event.Check.ProxyEntityName
 	details["state"] = event.Check.State
@@ -199,6 +198,18 @@ func parseDetails(event *types.Event) map[string]string {
 	details["occurrences_watermark"] = fmt.Sprintf("%d", event.Check.OccurrencesWatermark)
 	details["subscriptions"] = fmt.Sprintf("%v", event.Check.Subscriptions)
 	details["handlers"] = fmt.Sprintf("%v", event.Check.Handlers)
+
+	var dashboardUrl, outputUrl string
+	if plugin.SensuDashboard != "disabled" {
+		dashboardUrl = fmt.Sprintf("source: %s/%s/events/%s/%s \n", plugin.SensuDashboard, event.Entity.Namespace, event.Entity.Name, event.Check.Name)
+		details["sensuDashboard"] = dashboardUrl
+		outputUrl = fmt.Sprintf("\n%s", dashboardUrl)
+	} else {
+		outputUrl = ""
+	}
+
+	// embeded url in output make it available in notification message
+	details["output"] = event.Check.Output + outputUrl
 
 	return details
 }
